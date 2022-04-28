@@ -59,8 +59,8 @@ public class CallDbApiCashAccountTransactionsAuthCode {
         CallDbApiCashAccountTransactionsAuthCode callDbApiCashAccount = new CallDbApiCashAccountTransactionsAuthCode();
 
         //Please login to activate your test user to get your fkn and pin
-        String fkn = "Your FKN from on of your testusers";
-        String pin = "Your PIN from one of your testusers";
+        String fkn = "100100647600";
+        String pin = "97112";
 
         //Step 1
         Response response = callDbApiCashAccount.authorizationRequest();
@@ -75,10 +75,10 @@ public class CallDbApiCashAccountTransactionsAuthCode {
         response = callDbApiCashAccount.grantAccess(response);
 
         //Step 4
-        //What you have to do here?
+        String code = callDbApiCashAccount.getCode(response);
 
         //Step 5
-        //What you have to do here?
+        response = callDbApiCashAccount.getAccessTokenFromCode(code);
 
         String responseWithAccessToken  = response.readEntity(String.class);
         JsonObject jsonObject = JsonParser.parseString(responseWithAccessToken).getAsJsonObject();
@@ -111,9 +111,9 @@ public class CallDbApiCashAccountTransactionsAuthCode {
 
         //Please login to activate your client. The client_id and redirect_uri will be replaced with your activated client.
         Response response = wt.property(ClientProperties.FOLLOW_REDIRECTS, false)
-                .queryParam("response_type", "has to be replaced with correct setting")
-                .queryParam("client_id", "8b2030b0-7d64-4d89-bee8-c59fc071e778")
-                .queryParam("redirect_uri", "Your redirect URI from your app")
+                .queryParam("response_type", "code")
+                .queryParam("client_id", "6e45eca8-d4a1-4f3c-97c0-2f101ab65d5a")
+                .queryParam("redirect_uri", "https://localhost:80")
                 .queryParam("scope", "read_transactions")
                 .queryParam("state", "0.21581183640296075")
                 .request()
@@ -257,8 +257,8 @@ public class CallDbApiCashAccountTransactionsAuthCode {
      * @return The {@link Response} which contains the access token (bearer) in JSON format
      */
     private Response getAccessTokenFromCode(String code) {
-        HttpAuthenticationFeature auth = HttpAuthenticationFeature.basic("client_id"
-                , "client_secret");
+        HttpAuthenticationFeature auth = HttpAuthenticationFeature.basic("6e45eca8-d4a1-4f3c-97c0-2f101ab65d5a",
+                "AO898b4CUBue0osltmlZQ9pUJ1jRKMs0plBT3JI4sFambEezHrVmi6KSS-W3PislrLiy-I0jDo0bzaSHfmOrXMA");
         return requestAccessTokensFromCode(code, auth);
     }
 
@@ -275,7 +275,19 @@ public class CallDbApiCashAccountTransactionsAuthCode {
         // code -> code
         // redirect_uri -> Your redirect URI from your app
 
+        Form form = new Form();
+        form.param("grant_type", "authorization_code");
+        form.param("code", code);
+        form.param("redirect_uri", "https://localhost:80");
+
         //TODO 2 Execute a POST request with the ClientBuilder.newClient() and set the following properties to this client to execute the request.
+
+        Response response = ClientBuilder.newClient()
+                .target("https://simulator-api.db.com/gw/oidc/token")
+                .register(auth)
+                .property(ClientProperties.FOLLOW_REDIRECTS, false)
+                .request()
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
         //TODO 3 In the POST put the form as Entity.entity(form,MediaType.APPLICATION_FORM_URLENCODED_TYPE) so that the form params get's transmitted to the request
         //target -> https://simulator-api.db.com/gw/oidc/token
         //register -> auth
@@ -300,7 +312,7 @@ public class CallDbApiCashAccountTransactionsAuthCode {
         WebTarget wt = ClientBuilder.newBuilder()
                 .build()
                 .target("https://simulator-api.db.com/gw/dbapi/banking/transactions/v2")
-                .queryParam("iban", "DE10010000000000008695");
+                .queryParam("iban", "DE10010000000000009281");
 
         Response response = wt.request()
                 .header("Authorization", "Bearer " + accessToken)
